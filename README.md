@@ -1,6 +1,6 @@
 # @hookos/sdk
 
-TypeScript SDK for the **HookOS Protocol** — a programmable market engine on Base.
+TypeScript SDK for the **HookOS Protocol** — a programmable market engine live across five chains: Base, MegaETH, HyperEVM, BNB Chain, and Ethereum.
 
 HookOS combines token launches with custom AMM hooks (MEV shields, burns, PvP wagers, AI-tuned fees), a bonding curve DEX, a PvP arena, and a hook marketplace.
 
@@ -88,7 +88,7 @@ const hookos = new HookOS({
   rpcUrl: "https://your-rpc.example.com",
 });
 
-// Use HyperEVM
+// Use another chain (4326 MegaETH, 999 HyperEVM, 56 BNB Chain, 1 Ethereum)
 const hyperHookos = new HookOS({
   chainId: 999,
 });
@@ -115,7 +115,7 @@ const hookos = new HookOS({ publicClient });
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `chainId` | `8453 \| 999` | `8453` | Target chain (Base or HyperEVM) |
+| `chainId` | `8453 \| 4326 \| 999 \| 56 \| 1` | `8453` | Target chain (Base, MegaETH, HyperEVM, BNB Chain, Ethereum) |
 | `rpcUrl` | `string` | Public RPC | Custom RPC URL |
 | `walletClient` | `WalletClient` | — | viem WalletClient for write ops |
 | `publicClient` | `PublicClient` | — | Existing viem PublicClient |
@@ -144,15 +144,22 @@ const hookos = new HookOS({ publicClient });
 | `getProgress(token)` | Graduation progress (0-10000) |
 | `getMarketCap(token)` | Market cap in wei |
 | `getGraduationThreshold()` | ETH threshold to graduate |
+| `getStartMcapUsd()` | v2: start market-cap target (USD, 1e18) |
+| `getGraduationUsd()` | v2: graduation market-cap target (USD, 1e18) |
+| `getPriceUsd()` | v2: live native/USD price used by the curve |
 | `buy(token, ethAmount)` | Buy tokens with ETH (requires wallet) |
 | `sell(token, tokenAmount)` | Sell tokens for ETH (requires wallet) |
+
+**v2 USD-pegging:** `hookos.tokens.getEffectiveLaunchFee()` returns the native launch fee derived from a USD target at the live price; `getLaunchFeeUsd()` returns the USD target. `tokens.create()` now pays the effective fee automatically.
 
 ### `hookos.hooks`
 
 | Method | Description |
 |--------|-------------|
 | `getCount()` | Total registered hooks |
-| `getRegistrationFee()` | Registration fee (wei) |
+| `getRegistrationFee()` | Registration fee (wei, legacy fixed) |
+| `getRegistrationFeeUsd()` | v2: registration fee USD target (1e18) |
+| `getEffectiveRegistrationFee()` | v2: effective native fee at live price |
 | `get(hookId)` | Hook info by ID |
 | `browse(filters?)` | Browse hooks with optional filters |
 | `listBindings(token)` | Active hooks on a token |
@@ -195,24 +202,48 @@ const hookos = new HookOS({ publicClient });
 | `getEarnings(wallet)` | Earnings for an address |
 | `distribute()` | Trigger fee distribution (requires wallet) |
 
+### `hookos.feedBoost`
+
+FeedBoost slot auction (v2) — promoted placement on the Atlas feed, with USD-pegged minimum bids.
+
+| Method | Description |
+|--------|-------------|
+| `getSlotCount()` | Number of auction slots |
+| `getSlot(slotType)` | Live slot state (top token, current bid, expiry) |
+| `listSlots()` | Live state of every slot |
+| `getSlotConfig(slotType)` | Static config (minBid, minIncrement, duration) |
+| `getActiveBoost(slotType)` | Live boost occupying a slot |
+| `getEffectiveMinBid(slotType)` | v2: native min bid at the live USD price |
+| `getMinNextBid(slotType)` | Min bid to take the slot now |
+| `getProtocolFeeBps()` | Protocol fee on winning bids (bps) |
+| `placeBid(params)` | Bid on one slot (requires wallet) |
+| `placeBidBatch(params)` | A la carte bids across slots in one tx (requires wallet) |
+| `withdrawRefund()` | Withdraw outbid refund (requires wallet) |
+
 ## Contract Addresses (Base)
 
 | Contract | Address |
 |----------|---------|
 | TokenFactory | `0x9B3d636C27AD4CDEBFbE1F182B2b63F66Be7adE5` |
-| HookRegistry | `0xC062c550b4abcbE8fa50DF05Ea353864d0E01262` |
+| HookRegistry | `0x467A8Ab4A9B65D8Da151F402021b17A147C058c5` |
 | HookManager | `0x96c5E38362f86E52389E15a86247fB7326503c8d` |
 | FeeRouter | `0x64E3167b2B4eA1b8e3DdCaFe66a5b435BE7cD75f` |
 | Arena | `0x47C839295754307E635DC6bEf89856267932dD38` |
 | BondingCurve | `0x3C4b0F2D3d5bBdf4E0B323f0a8Eec7B02Cce6d40` |
 | Events | `0x2c34ee38d96FBC890d341D80610375657594EFCc` |
+| FeedBoostAuction | `0xaD31291Ff64a26D2eE5346A3c96b07f6cEe4b442` |
 
 ## Supported Chains
 
 | Chain | ID | Status |
 |-------|----|--------|
-| Base | 8453 | Live |
-| HyperEVM | 999 | Coming Soon |
+| Base | 8453 | Live (primary) |
+| MegaETH | 4326 | Live |
+| HyperEVM | 999 | Live |
+| BNB Chain | 56 | Live |
+| Ethereum | 1 | Live |
+
+> Full contract coverage (factory, hooks, bonding curve, fees, arena, events) is deployed on all five chains. Growth-layer contracts (NFTs, battle pass, quests, clans, analytics, launch controller, donation router, extension registry) are currently Base + MegaETH only; on other chains those addresses resolve to the zero address.
 
 ## Links
 

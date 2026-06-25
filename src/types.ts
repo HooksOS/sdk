@@ -59,6 +59,10 @@ export interface CurveState {
   pool: Address;
   createdAt: number;
   useExternal: boolean;
+  /** v2: per-curve virtual ETH seed used for USD-pegged pricing. */
+  virtualEthSeed: bigint;
+  /** v2: native-currency graduation threshold derived from the USD target. */
+  graduationEth: bigint;
 }
 
 export interface BuyQuote {
@@ -220,6 +224,59 @@ export interface EventInfo {
   endTime: number;
   season: number;
   status: EventStatus;
+}
+
+// ---------------------------------------------------------------------------
+// FeedBoost Auction Types (v2)
+// ---------------------------------------------------------------------------
+
+/** A feed-boost auction slot, as returned by `getSlot`. */
+export interface SlotInfo {
+  slotType: number;
+  name: string;
+  active: boolean;
+  /** Configured (native) minimum bid, before USD pegging. */
+  minBid: bigint;
+  /** Current top token holding the slot (zero address if none). */
+  topToken: Address;
+  /** Current winning bid (in wei). */
+  currentBid: bigint;
+  /** Unix timestamp at which the current boost expires. */
+  expiry: number;
+}
+
+/** Static config for a slot, as returned by `getSlotConfig`. */
+export interface SlotConfig {
+  minBid: bigint;
+  minIncrement: bigint;
+  duration: bigint;
+}
+
+/** Live boost occupying a slot, as returned by `getActiveBoosts`. */
+export interface ActiveBoost {
+  token: Address;
+  bidder: Address;
+  bid: bigint;
+  startTime: number;
+  expiry: number;
+}
+
+/** Params for placing a single feed-boost bid. */
+export interface PlaceBidParams {
+  token: Address;
+  slotType: number;
+  /** Bid value in wei (sent as msg.value). */
+  value: bigint;
+}
+
+/** Params for placing à la carte bids across multiple slots in one tx. */
+export interface PlaceBidBatchParams {
+  token: Address;
+  slots: number[];
+  /** Per-slot bid amounts (in wei). Their sum should equal the tx value. */
+  amounts: bigint[];
+  /** Total value in wei (sent as msg.value). Defaults to sum(amounts). */
+  value?: bigint;
 }
 
 // ---------------------------------------------------------------------------

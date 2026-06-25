@@ -40,6 +40,40 @@ export class TradingModule {
   }
 
   /**
+   * Get the bonding-curve start market cap target, in USD (1e18-scaled).
+   * v2 USD-pegging: the curve anchors its seed to this USD value at the live native/USD price.
+   */
+  async getStartMcapUsd(): Promise<bigint> {
+    return this.publicClient.readContract({
+      address: this.address,
+      abi: BondingCurveABI,
+      functionName: "startMcapUsd",
+    });
+  }
+
+  /**
+   * Get the graduation market cap target, in USD (1e18-scaled). v2 USD-pegging.
+   */
+  async getGraduationUsd(): Promise<bigint> {
+    return this.publicClient.readContract({
+      address: this.address,
+      abi: BondingCurveABI,
+      functionName: "graduationUsd",
+    });
+  }
+
+  /**
+   * Get the live native/USD price the curve is using (1e18-scaled USD per native token).
+   */
+  async getPriceUsd(): Promise<bigint> {
+    return this.publicClient.readContract({
+      address: this.address,
+      abi: BondingCurveABI,
+      functionName: "priceUsd",
+    });
+  }
+
+  /**
    * Get the full bonding curve state for a token.
    * Returns null if the token has no bonding curve.
    */
@@ -51,7 +85,7 @@ export class TradingModule {
       args: [token],
     });
 
-    const [tokenAddr, creator, virtualTokenReserve, virtualEthReserve, tokensSold, ethCollected, totalSupply, graduated, pool, createdAt, useExternal] = result;
+    const [tokenAddr, creator, virtualTokenReserve, virtualEthReserve, tokensSold, ethCollected, totalSupply, graduated, pool, createdAt, useExternal, virtualEthSeed, graduationEth] = result;
 
     if (tokenAddr === ZERO_ADDRESS) {
       return null;
@@ -69,6 +103,8 @@ export class TradingModule {
       pool,
       createdAt: Number(createdAt),
       useExternal,
+      virtualEthSeed,
+      graduationEth,
     };
   }
 

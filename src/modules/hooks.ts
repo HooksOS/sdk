@@ -52,6 +52,30 @@ export class HookModule {
   }
 
   /**
+   * Get the configured hook registration fee in USD (1e18-scaled). v2 USD-pegging.
+   */
+  async getRegistrationFeeUsd(): Promise<bigint> {
+    return this.publicClient.readContract({
+      address: this.registryAddress,
+      abi: HookRegistryABI,
+      functionName: "registrationFeeUsd",
+    });
+  }
+
+  /**
+   * Get the effective registration fee in native currency (wei), derived from the
+   * USD target at the live native/USD price. This is the amount `register()` must send.
+   * v2 — prefer this over the legacy fixed `registrationFee`.
+   */
+  async getEffectiveRegistrationFee(): Promise<bigint> {
+    return this.publicClient.readContract({
+      address: this.registryAddress,
+      abi: HookRegistryABI,
+      functionName: "effectiveRegistrationFee",
+    });
+  }
+
+  /**
    * Get detailed info for a specific hook by its hookId.
    */
   async get(hookId: Hash): Promise<HookInfo> {
@@ -180,7 +204,15 @@ export class HookModule {
     const account = this.walletClient.account;
     if (!account) throw new WalletRequiredError("hooks.register (no account)");
 
-    const value = params.value ?? await this.getRegistrationFee();
+    // v2: effective native fee tracks the USD target at the live price; fall back to legacy.
+    let value = params.value;
+    if (value === undefined) {
+      try {
+        value = await this.getEffectiveRegistrationFee();
+      } catch {
+        value = await this.getRegistrationFee();
+      }
+    }
 
     const hash: Hash = await this.walletClient.writeContract({
       address: this.registryAddress,

@@ -5,3 +5,4 @@ export { ArenaABI } from "./Arena.js";
 export { EventsABI } from "./Events.js";
 export { FeeRouterABI } from "./FeeRouter.js";
 export { BondingCurveABI } from "./BondingCurve.js";
+export { FeedBoostAuctionABI } from "./FeedBoostAuction.js";

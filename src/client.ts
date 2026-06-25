@@ -5,7 +5,7 @@ import {
   type WalletClient,
   type Chain,
 } from "viem";
-import { base } from "viem/chains";
+import { base, bsc, mainnet } from "viem/chains";
 import { getAddresses, type ChainId } from "./addresses.js";
 import { ChainError } from "./errors.js";
 import { TokenModule } from "./modules/tokens.js";
@@ -14,6 +14,7 @@ import { ArenaModule } from "./modules/arena.js";
 import { EventsModule } from "./modules/events.js";
 import { FeeModule } from "./modules/fees.js";
 import { TradingModule } from "./modules/trading.js";
+import { FeedBoostModule } from "./modules/feedboost.js";
 
 /**
  * Configuration options for the HookOS SDK client.
@@ -21,7 +22,7 @@ import { TradingModule } from "./modules/trading.js";
 export interface HookOSOptions {
   /**
    * Chain ID. Defaults to 8453 (Base).
-   * Supported: 8453 (Base), 999 (HyperEVM).
+   * Supported: 8453 (Base), 4326 (MegaETH), 999 (HyperEVM), 56 (BNB Chain), 1 (Ethereum).
    */
   chainId?: ChainId;
 
@@ -46,6 +47,8 @@ export interface HookOSOptions {
 // Chain definitions for supported networks
 const CHAIN_DEFS: Record<number, Chain> = {
   8453: base,
+  56: bsc,
+  1: mainnet,
   999: {
     id: 999,
     name: "HyperEVM",
@@ -54,11 +57,22 @@ const CHAIN_DEFS: Record<number, Chain> = {
       default: { http: ["https://rpc.hyperliquid.xyz/evm"] },
     },
   } as Chain,
+  4326: {
+    id: 4326,
+    name: "MegaETH",
+    nativeCurrency: { name: "Ether", symbol: "ETH", decimals: 18 },
+    rpcUrls: {
+      default: { http: ["https://megaeth.drpc.org"] },
+    },
+  } as Chain,
 };
 
 const DEFAULT_RPC: Record<number, string> = {
-  8453: "https://base.llamarpc.com", // fallback: https://mainnet.base.org
+  8453: "https://mainnet.base.org",
+  4326: "https://megaeth.drpc.org",
   999: "https://rpc.hyperliquid.xyz/evm",
+  56: "https://bsc-dataseed.binance.org",
+  1: "https://ethereum-rpc.publicnode.com",
 };
 
 /**
@@ -105,6 +119,8 @@ export class HookOS {
   public readonly fees: FeeModule;
   /** Bonding curve trading (buy/sell/quotes). */
   public readonly trading: TradingModule;
+  /** FeedBoost slot auction (read slots, place à la carte bids). */
+  public readonly feedBoost: FeedBoostModule;
 
   /** The underlying viem PublicClient used for reads. */
   public readonly publicClient: PublicClient;
@@ -142,5 +158,6 @@ export class HookOS {
     this.events = new EventsModule(addresses.events, this.publicClient, this.walletClient);
     this.fees = new FeeModule(addresses.feeRouter, this.publicClient, this.walletClient);
     this.trading = new TradingModule(addresses.bondingCurve, this.publicClient, this.walletClient);
+    this.feedBoost = new FeedBoostModule(addresses.feedBoostAuction, this.publicClient, this.walletClient);
   }
 }

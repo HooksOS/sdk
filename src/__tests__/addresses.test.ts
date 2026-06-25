@@ -21,17 +21,28 @@ describe("Addresses", () => {
     });
   });
 
-  it("HyperEVM (999) core addresses are non-zero", () => {
-    const addrs = ADDRESSES[999];
-    expect(addrs.tokenFactory).not.toBe(ZERO);
-    expect(addrs.hookRegistry).not.toBe(ZERO);
-    expect(addrs.feeRouter).not.toBe(ZERO);
-    expect(addrs.bondingCurve).not.toBe(ZERO);
+  it("all chains' core launch+trade addresses are non-zero", () => {
+    for (const chainId of [8453, 4326, 999, 56, 1] as const) {
+      const addrs = ADDRESSES[chainId];
+      expect(addrs.tokenFactory, `tokenFactory ${chainId}`).not.toBe(ZERO);
+      expect(addrs.hookRegistry, `hookRegistry ${chainId}`).not.toBe(ZERO);
+      expect(addrs.hookManager, `hookManager ${chainId}`).not.toBe(ZERO);
+      expect(addrs.feeRouter, `feeRouter ${chainId}`).not.toBe(ZERO);
+      expect(addrs.bondingCurve, `bondingCurve ${chainId}`).not.toBe(ZERO);
+    }
   });
 
-  it("has both supported chains", () => {
+  it("all chain address sets are valid hex", () => {
+    for (const chainId of [8453, 4326, 999, 56, 1] as const) {
+      Object.values(ADDRESSES[chainId]).forEach((addr) => {
+        expect(addr).toMatch(/^0x[0-9a-fA-F]{40}$/);
+      });
+    }
+  });
+
+  it("has all five supported chains", () => {
     expect(Object.keys(ADDRESSES).map(Number)).toEqual(
-      expect.arrayContaining([8453, 999])
+      expect.arrayContaining([8453, 4326, 999, 56, 1])
     );
   });
 

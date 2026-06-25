@@ -9,6 +9,7 @@ export { ArenaModule } from "./modules/arena.js";
 export { EventsModule } from "./modules/events.js";
 export { FeeModule } from "./modules/fees.js";
 export { TradingModule } from "./modules/trading.js";
+export { FeedBoostModule } from "./modules/feedboost.js";
 
 // ─── Types ─────────────────────────────────────────────────────────────
 export type {
@@ -38,6 +39,11 @@ export type {
   PriceUpdate,
   Candle,
   Timeframe,
+  SlotInfo,
+  SlotConfig,
+  ActiveBoost,
+  PlaceBidParams,
+  PlaceBidBatchParams,
 } from "./types.js";
 
 export {
@@ -51,6 +57,9 @@ export {
 export { ADDRESSES, getAddresses } from "./addresses.js";
 export type { ChainId, ContractAddresses } from "./addresses.js";
 
+// ─── RPC fallback pools (verified, auto-failover) ──────────────────────
+export { RPC_ENDPOINTS, getRpcPool } from "./rpc.js";
+
 // ─── ABIs ──────────────────────────────────────────────────────────────
 export {
   TokenFactoryABI,
@@ -60,6 +69,7 @@ export {
   EventsABI,
   FeeRouterABI,
   BondingCurveABI,
+  FeedBoostAuctionABI,
 } from "./abis/index.js";
 
 // ─── Errors ────────────────────────────────────────────────────────────

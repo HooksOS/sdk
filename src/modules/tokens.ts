@@ -41,6 +41,31 @@ export class TokenModule {
   }
 
   /**
+   * Get the configured launch fee in USD (1e18-scaled). v2 USD-pegging.
+   * On non-ETH chains the effective native fee tracks this USD value at the live price.
+   */
+  async getLaunchFeeUsd(): Promise<bigint> {
+    return this.publicClient.readContract({
+      address: this.address,
+      abi: TokenFactoryABI,
+      functionName: "launchFeeUsd",
+    });
+  }
+
+  /**
+   * Get the effective launch fee in native currency (wei), derived from the USD
+   * target at the live native/USD price. This is the amount `create()` must send.
+   * v2 — prefer this over the legacy fixed `launchFee`.
+   */
+  async getEffectiveLaunchFee(): Promise<bigint> {
+    return this.publicClient.readContract({
+      address: this.address,
+      abi: TokenFactoryABI,
+      functionName: "effectiveLaunchFee",
+    });
+  }
+
+  /**
    * Get the number of tokens created by a specific address.
    */
   async getCreatorCount(creator: Address): Promise<bigint> {
@@ -132,7 +157,16 @@ export class TokenModule {
   async create(params: CreateTokenParams): Promise<TokenCreateResult> {
     if (!this.walletClient) throw new WalletRequiredError("tokens.create");
 
-    const value = params.value ?? await this.getLaunchFee();
+    // v2: the effective native fee is derived from the USD target at the live price.
+    // Fall back to the legacy fixed `launchFee` if `effectiveLaunchFee` is unavailable.
+    let value = params.value;
+    if (value === undefined) {
+      try {
+        value = await this.getEffectiveLaunchFee();
+      } catch {
+        value = await this.getLaunchFee();
+      }
+    }
     const account = this.walletClient.account;
     if (!account) throw new WalletRequiredError("tokens.create (no account)");
 
